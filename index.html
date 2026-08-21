@@ -636,6 +636,11 @@
         <p>저장된 계산이 없습니다</p>
       </div>
     </div>
+    <div class="button-group" style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px;">
+      <button class="btn btn-secondary btn-small" id="btnExport" title="저장한 데이터를 JSON 파일로 다운로드">💾 데이터 내보내기</button>
+      <button class="btn btn-secondary btn-small" id="btnImport" title="백업한 JSON 파일에서 복구">📂 데이터 복구</button>
+      <input type="file" id="fileInput" accept=".json" style="display: none;">
+    </div>
   </div>
 
   <!-- 참고사항: 기존 상품 -->
@@ -922,9 +927,78 @@
 
   document.getElementById('simName').addEventListener('input', updateCurrentProduct);
 
+  // 데이터 내보내기 (JSON 다운로드)
+  function exportData() {
+    const saved = JSON.parse(localStorage.getItem('savedSims') || '[]');
+    if (saved.length === 0) {
+      showToast('저장된 데이터가 없습니다');
+      return;
+    }
+
+    const dataStr = JSON.stringify(saved, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `굿즈마진계산기_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showToast(`${saved.length}개 계산 데이터 다운로드됨`);
+  }
+
+  // 데이터 복구 (JSON 업로드)
+  function importData() {
+    document.getElementById('fileInput').click();
+  }
+
+  document.getElementById('fileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      try {
+        const imported = JSON.parse(event.target.result);
+        if (!Array.isArray(imported)) {
+          showToast('유효한 데이터 파일이 아닙니다');
+          return;
+        }
+
+        const existing = JSON.parse(localStorage.getItem('savedSims') || '[]');
+        const merged = [...existing, ...imported];
+
+        // 중복 제거 (timestamp 기준)
+        const seen = new Set();
+        const unique = merged.filter(item => {
+          const key = `${item.name}_${item.timestamp}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+
+        localStorage.setItem('savedSims', JSON.stringify(unique));
+        loadSavedList();
+        showToast(`${imported.length}개 데이터 복구됨 (총 ${unique.length}개)`);
+      } catch (err) {
+        showToast('데이터 복구 실패');
+      }
+    };
+    reader.readAsText(file);
+
+    // 파일 입력 초기화
+    e.target.value = '';
+  });
+
   // 초기화
   initProducts();
   loadSavedList();
+
+  // 이벤트
+  document.getElementById('btnExport').addEventListener('click', exportData);
+  document.getElementById('btnImport').addEventListener('click', importData);
 </script>
 
 </body>
