@@ -905,12 +905,113 @@
 
   // 기존 상품 계산
   function updateDisplay() {
-    const { profitPerUnit, marginRate } = calculate(currentProduct.price, currentProduct.cost, 4000, currentProduct.sold, settings.kind);
+    const shipRev = 4000;
+    const price = currentProduct.price;
+    const cost = currentProduct.cost;
+    const sold = currentProduct.sold;
+    const kind = settings.kind;
+
+    const { profitPerUnit, marginRate, totalFee, logiCost } = calculate(price, cost, shipRev, sold, kind);
 
     document.getElementById('dispPrice').textContent = currentProduct.price.toLocaleString() + '원';
     document.getElementById('dispProfit').textContent = Math.round(profitPerUnit).toLocaleString() + '원';
     document.getElementById('dispMargin').textContent = marginRate.toFixed(1) + '%';
-    document.getElementById('dispTotal').textContent = Math.round(profitPerUnit * currentProduct.sold).toLocaleString() + '원';
+    document.getElementById('dispTotal').textContent = Math.round(profitPerUnit * sold).toLocaleString() + '원';
+
+    // 상세 계산 표시
+    displayCalcDetails(price, cost, profitPerUnit, sold, totalFee, logiCost, shipRev, kind);
+  }
+
+  // 상세 계산
+  function displayCalcDetails(price, cost, profit, sold, fees, logi, shipRev, kind) {
+    const totalRevenue = price + shipRev;
+    const kindFee = totalRevenue * (kind / 100);
+    const pgFee = totalRevenue * (settings.pg / 100);
+    const hcFee = totalRevenue * (kind / 100) * (settings.hc / 100);
+    const totalProfit = profit * sold;
+
+    const html = `
+      <div style="font-size: 14px; line-height: 1.8;">
+        <div style="margin-bottom: 20px;">
+          <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 12px; font-size: 15px;">📈 매출 구성</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div style="background: var(--bg); padding: 10px; border-radius: 8px;">
+              <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">상품 판매가</div>
+              <div style="font-size: 16px; font-weight: 600; color: var(--text-primary);">${price.toLocaleString()}원</div>
+            </div>
+            <div style="background: var(--bg); padding: 10px; border-radius: 8px;">
+              <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">배송비 (고객부담)</div>
+              <div style="font-size: 16px; font-weight: 600; color: var(--success);">+${shipRev.toLocaleString()}원</div>
+            </div>
+            <div style="background: var(--bg); padding: 10px; border-radius: 8px; grid-column: 1 / -1;">
+              <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">총 매출액</div>
+              <div style="font-size: 16px; font-weight: 600; color: var(--primary);">${totalRevenue.toLocaleString()}원</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 12px; font-size: 15px;">💸 비용 분석</div>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--bg); border-radius: 8px;">
+              <div>
+                <div style="font-size: 12px; color: var(--text-secondary);">원가 (제작비 × 1.25 × 1.1)</div>
+                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">제작비 + 대행수수료 + VAT</div>
+              </div>
+              <div style="font-size: 16px; font-weight: 600; color: var(--danger);">−${cost.toLocaleString()}원</div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--bg); border-radius: 8px;">
+              <div>
+                <div style="font-size: 12px; color: var(--text-secondary);">수수료</div>
+                <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">
+                  • 상품유형 (${kind}%) = ${Math.round(kindFee).toLocaleString()}원<br>
+                  • PG (${settings.pg}%) = ${Math.round(pgFee).toLocaleString()}원<br>
+                  • 한컴대행 (${kind}% × ${settings.hc}%) = ${Math.round(hcFee).toLocaleString()}원
+                </div>
+              </div>
+              <div style="font-size: 16px; font-weight: 600; color: var(--danger);">−${Math.round(fees).toLocaleString()}원</div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--bg); border-radius: 8px;">
+              <div>
+                <div style="font-size: 12px; color: var(--text-secondary);">물류비</div>
+                <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">
+                  • 출고 ${settings.pack.toLocaleString()} + 배송 ${settings.ship.toLocaleString()} + 부자재 ${settings.mat.toLocaleString()} + 입고 ${settings.ovh.toLocaleString()}
+                </div>
+              </div>
+              <div style="font-size: 16px; font-weight: 600; color: var(--danger);">−${logi.toLocaleString()}원</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 12px; font-size: 15px;">📊 이익 분석</div>
+          <div style="background: linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(0, 113, 227, 0.1) 100%); padding: 14px; border-radius: 10px; border-left: 3px solid var(--success);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">개당 순이익</div>
+                <div style="font-size: 18px; font-weight: 700; color: var(--success);">${Math.round(profit).toLocaleString()}원</div>
+              </div>
+              <div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">이익률</div>
+                <div style="font-size: 18px; font-weight: 700; color: var(--success);">${(profit / price * 100).toFixed(1)}%</div>
+              </div>
+              <div style="grid-column: 1 / -1;">
+                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">전체 순이익 (${sold.toLocaleString()}개 판매 기준)</div>
+                <div style="font-size: 20px; font-weight: 700; color: var(--success);">${Math.round(totalProfit).toLocaleString()}원</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background: var(--primary); color: white; padding: 12px; border-radius: 8px; font-size: 13px; line-height: 1.6;">
+          <strong>💡 계산 기준:</strong> 모든 금액은 부가세(VAT) 포함 기준입니다. 배송비는 정산서상 총결제금액에 포함되어 수수료 계산에 반영됩니다.
+        </div>
+      </div>
+    `;
+
+    document.getElementById('calcDetails').innerHTML = html;
   }
 
   // 토스트
