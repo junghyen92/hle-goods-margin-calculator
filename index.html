@@ -1084,53 +1084,109 @@
     displaySuggestion(name, suggestedPrice, marketAnalysis, cost, avgMargin);
   }
 
-  // 시장 분석
+  // 시장 분석 (입력된 상품명 기반)
   function analyzeMarket(productName) {
     const name = productName.toLowerCase();
+    let detectedType = '';
+    let detectedEvent = '';
 
+    // 상품 타입 감지
     if (name.includes('포토카드') || name.includes('카드') || name.includes('사진')) {
-      return {
+      detectedType = '포토카드';
+    } else if (name.includes('반다나') || name.includes('밴드') || name.includes('악세서리') || name.includes('팔찌')) {
+      detectedType = '반다나/악세서리';
+    } else if (name.includes('브로마이드') || name.includes('포스터') || name.includes('원판')) {
+      detectedType = '브로마이드/포스터';
+    } else if (name.includes('엽서') || name.includes('엽필') || name.includes('편지')) {
+      detectedType = '엽서';
+    } else if (name.includes('의류') || name.includes('셔츠') || name.includes('후드') || name.includes('티셔츠')) {
+      detectedType = '의류';
+    } else if (name.includes('모자') || name.includes('캡')) {
+      detectedType = '모자/캡';
+    } else {
+      detectedType = '일반 굿즈';
+    }
+
+    // 이벤트/시장 감지
+    if (name.includes('마라톤') || name.includes('스포츠') || name.includes('경기') || name.includes('대회') || name.includes('올림픽') || name.includes('월드컵')) {
+      detectedEvent = '스포츠/마라톤 이벤트';
+    } else if (name.includes('콘서트') || name.includes('페스') || name.includes('페스티벌')) {
+      detectedEvent = '콘서트/뮤직페스';
+    } else if (name.includes('팬') || name.includes('kpop') || name.includes('idol') || name.includes('연예인')) {
+      detectedEvent = 'K-POP 팬덤';
+    } else if (name.includes('게임') || name.includes('esports') || name.includes('e스포츠') || name.includes('리그')) {
+      detectedEvent = 'E스포츠 게임';
+    }
+
+    // 상품별 기본 정보
+    const productData = {
+      '포토카드': {
         category: 'K-POP 굿즈 시장',
         priceRange: '8,000~15,000원',
-        reason: '포토카드/사진 굿즈는 팬덤 시장에서 가장 인기 있는 아이템으로, 일반적으로 8,000~15,000원대의 가격대를 유지합니다.',
+        baseReason: '포토카드는 팬덤 시장에서 가장 인기 있는 수집 아이템입니다.',
         competitors: '포토카드세트(9,900~15,000원), 플레이트(10,000~12,000원)'
-      };
-    } else if (name.includes('반다나') || name.includes('밴드') || name.includes('악세서리')) {
-      return {
+      },
+      '반다나/악세서리': {
         category: '스포츠/이벤트 굿즈 시장',
         priceRange: '8,000~15,000원',
-        reason: '스포츠 이벤트 굿즈인 반다나/악세서리는 경기장 판매 및 온라인 굿즈로 8,000~15,000원대가 표준입니다.',
+        baseReason: '반다나/악세서리는 경기장 판매 및 온라인 굿즈로 인기 있는 아이템입니다.',
         competitors: '응원용품(8,000~12,000원), 팬 악세서리(10,000~15,000원)'
-      };
-    } else if (name.includes('브로마이드') || name.includes('포스터')) {
-      return {
+      },
+      '브로마이드/포스터': {
         category: 'K-POP 굿즈 시장',
         priceRange: '10,000~13,000원',
-        reason: '브로마이드/포스터는 프리미엄 컬렉팅 아이템으로, 세트 상품일수록 높은 가격대를 유지합니다.',
+        baseReason: '브로마이드/포스터는 프리미엄 컬렉팅 아이템으로 높은 가격대를 유지합니다.',
         competitors: '브로마이드세트(10,000~13,000원), 굿즈박스(15,000~20,000원)'
-      };
-    } else if (name.includes('엽서') || name.includes('엽필') || name.includes('편지')) {
-      return {
+      },
+      '엽서': {
         category: '기념품/문구 시장',
         priceRange: '3,000~8,000원',
-        reason: '엽서는 저가 수집 아이템으로, 일반적으로 3,000~8,000원대의 가격대입니다.',
+        baseReason: '엽서는 저가 기념품 및 수집 아이템으로 대중적입니다.',
         competitors: '일반엽서(3,000~5,000원), 럭셔리엽서(5,000~8,000원)'
-      };
-    } else if (name.includes('의류') || name.includes('셔츠') || name.includes('후드')) {
-      return {
+      },
+      '의류': {
         category: '팬시 의류 시장',
         priceRange: '20,000~35,000원',
-        reason: '의류 굿즈는 프리미엄 상품으로, 브랜드와 디자인에 따라 20,000~35,000원대가 일반적입니다.',
+        baseReason: '의류 굿즈는 프리미엄 상품으로 브랜드 가치가 반영됩니다.',
         competitors: 'K-POP 티셔츠(25,000~35,000원), 후드(35,000~50,000원)'
-      };
-    } else {
-      return {
+      },
+      '모자/캡': {
+        category: '패션 굿즈 시장',
+        priceRange: '15,000~25,000원',
+        baseReason: '모자는 스포츠 및 팬덤 시장의 주요 굿즈입니다.',
+        competitors: '스포츠캡(15,000~20,000원), 럭셔리캡(20,000~25,000원)'
+      },
+      '일반 굿즈': {
         category: '일반 굿즈 시장',
         priceRange: '8,000~15,000원',
-        reason: '제품별 특성에 따라 8,000~15,000원대의 가격대를 권장합니다.',
+        baseReason: '상품 특성에 따라 적절한 가격대를 책정합니다.',
         competitors: '비슷한 카테고리 제품들(8,000~15,000원대)'
-      };
+      }
+    };
+
+    const baseData = productData[detectedType] || productData['일반 굿즈'];
+
+    // 이벤트별 추가 정보
+    let eventInfo = '';
+    if (detectedEvent === '스포츠/마라톤 이벤트') {
+      eventInfo = `<br><strong>📍 이벤트 분석:</strong> 마라톤/스포츠 이벤트 굿즈는 현장 판매와 공식 온라인몰에서 높은 가격 탄력성을 보입니다. 경기 수준(전국/국제)과 참여도에 따라 가격대가 결정됩니다.`;
+    } else if (detectedEvent === '콘서트/뮤직페스') {
+      eventInfo = `<br><strong>🎵 이벤트 분석:</strong> 콘서트/페스티벌 굿즈는 팬들의 높은 구매욕으로 프리미엄 가격대를 유지합니다. 투어나 한정판 여부에 따라 가격이 달라집니다.`;
+    } else if (detectedEvent === 'K-POP 팬덤') {
+      eventInfo = `<br><strong>💫 팬덤 분석:</strong> K-POP 팬덤 굿즈는 수집 가치가 높아 안정적인 가격대를 유지합니다. 연예인 이름/사진 포함 시 프리미엄 가격이 책정됩니다.`;
+    } else if (detectedEvent === 'E스포츠 게임') {
+      eventInfo = `<br><strong>🎮 게임 분석:</strong> E스포츠/게임 굿즈는 팬층과 프로 팀의 인기도에 따라 가격이 결정됩니다. 리미티드 에디션 여부가 중요합니다.`;
     }
+
+    return {
+      productName: productName,
+      detectedType: detectedType,
+      detectedEvent: detectedEvent,
+      category: baseData.category,
+      priceRange: baseData.priceRange,
+      reason: `${baseData.baseReason} (감지된 상품: ${detectedType}${detectedEvent ? ' / ' + detectedEvent : ''})${eventInfo}`,
+      competitors: baseData.competitors
+    };
   }
 
   // 제안 표시
@@ -1157,19 +1213,26 @@
       </div>
 
       <div style="background: var(--bg); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
-        <div style="font-weight: 600; color: var(--text-primary); font-size: 14px; margin-bottom: 8px;">📊 시장 분석</div>
-        <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+        <div style="font-weight: 600; color: var(--text-primary); font-size: 14px; margin-bottom: 10px;">📊 시장 분석</div>
+        <div style="background: var(--surface); border-left: 3px solid var(--primary); padding: 10px; border-radius: 6px; margin-bottom: 10px;">
+          <div style="font-weight: 700; color: var(--primary); font-size: 13px; margin-bottom: 6px;">🔍 감지된 상품</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">
+            상품명: <span style="font-weight: 600; color: var(--text-primary);">\"${market.productName}\"</span><br>
+            타입: <span style="font-weight: 600;">${market.detectedType}</span>${market.detectedEvent ? '<br>이벤트: <span style="font-weight: 600;">' + market.detectedEvent + '</span>' : ''}
+          </div>
+        </div>
+        <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.7;">
           <div style="margin-bottom: 8px;">
-            <span style="font-weight: 600; color: var(--text-primary);">시장:</span> ${market.category}
+            <span style="font-weight: 600; color: var(--text-primary);">📍 시장:</span> ${market.category}
           </div>
           <div style="margin-bottom: 8px;">
-            <span style="font-weight: 600; color: var(--text-primary);">일반 가격대:</span> ${market.priceRange}
+            <span style="font-weight: 600; color: var(--text-primary);">💰 가격대:</span> ${market.priceRange}
           </div>
           <div style="margin-bottom: 8px;">
-            <span style="font-weight: 600; color: var(--text-primary);">분석:</span> ${market.reason}
+            <span style="font-weight: 600; color: var(--text-primary);">📋 분석:</span> ${market.reason}
           </div>
           <div>
-            <span style="font-weight: 600; color: var(--text-primary);">비교군:</span> ${market.competitors}
+            <span style="font-weight: 600; color: var(--text-primary);">🏆 비교:</span> ${market.competitors}
           </div>
         </div>
       </div>
