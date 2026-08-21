@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>굿즈 마진 계산기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  /* ════════════════════════════════════════════════════════════════
+     Hanwha Life Design System
+     신뢰성·안정성·명확성을 위한 미니멀 디자인
+     ════════════════════════════════════════════════════════════════ */
+  :root {
+    /* 한화생명 색상 */
+    --primary: #003DA5;      /* 주요 - 신뢰성 */
+    --success: #00A651;      /* 성공/이익 */
+    --danger: #D32F2F;       /* 위험/손실 */
+    --warning: #FF9800;      /* 주의 */
+
+    /* 중성 색상 */
+    --bg: #F8F9FA;           /* 페이지 배경 */
+    --surface: #FFFFFF;      /* 카드 배경 */
+    --border: #E0E0E0;       /* 보더 */
+    --text-primary: #1A1A1A; /* 주 텍스트 */
+    --text-secondary: #666666; /* 보조 텍스트 */
+    --text-tertiary: #999999; /* 약한 텍스트 */
+
+    /* 그래디언트 배경 */
+    --success-light: #E8F5E9;
+    --danger-light: #FFEBEE;
+    --primary-light: #E3F2FD;
+
+    /* 그림자 */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.1);
+
+    /* 폰트 */
+    --f-display: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --f-body: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --f-mono: "IBM Plex Mono", "Courier New", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0D1117;
+      --surface: #161B22;
+      --border: #30363D;
+      --text-primary: #E6EDF3;
+      --text-secondary: #8B949E;
+      --text-tertiary: #6E7681;
+      --success: #3FB950;
+      --danger: #FF7B7B;
+      --warning: #FFB84D;
+      --success-light: #0D3D1F;
+      --danger-light: #3D1A1A;
+      --primary-light: #0D2554;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0D1117;
+    --surface: #161B22;
+    --border: #30363D;
+    --text-primary: #E6EDF3;
+    --text-secondary: #8B949E;
+    --text-tertiary: #6E7681;
+    --success: #3FB950;
+    --danger: #FF7B7B;
+    --warning: #FFB84D;
+    --success-light: #0D3D1F;
+    --danger-light: #3D1A1A;
+    --primary-light: #0D2554;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: var(--f-body);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .tn {
+    font-family: var(--f-mono);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    letter-spacing: -0.02em;
+  }
+
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     헤더
+     ══════════════════════════════════════════════════════════════ */
+  .header {
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: -0.01em;
+  }
+
+  .header-sub {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 8px 0 0 0;
+  }
+
+  .meta {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    text-align: right;
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     상품 선택
+     ══════════════════════════════════════════════════════════════ */
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 24px 0 12px 0;
+  }
+
+  .pgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .pcard {
+    appearance: none;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    font-family: inherit;
+    position: relative;
+  }
+
+  .pcard:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-md);
+  }
+
+  .pcard[aria-checked="true"] {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .pcard-name {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+
+  .pcard-price {
+    font-family: var(--f-mono);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  .pcard-qty {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     결과 패널 (메인 요약)
+     ══════════════════════════════════════════════════════════════ */
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .result-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 20px;
+  }
+
+  .result-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .result-item {
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+  }
+
+  .result-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .result-value {
+    font-family: var(--f-mono);
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+
+  .result-value.success {
+    color: var(--success);
+  }
+
+  .result-value.danger {
+    color: var(--danger);
+  }
+
+  .result-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     탭 시스템
+     ══════════════════════════════════════════════════════════════ */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 24px;
+  }
+
+  .tab-btn {
+    appearance: none;
+    background: none;
+    border: none;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s ease;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+  }
+
+  .tab-btn:hover {
+    color: var(--primary);
+  }
+
+  .tab-btn[aria-selected="true"] {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+  }
+
+  .tab-pane {
+    display: none;
+  }
+
+  .tab-pane[data-active="true"] {
+    display: block;
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     입력 폼
+     ══════════════════════════════════════════════════════════════ */
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group:last-child {
+    margin-bottom: 0;
+  }
+
+  .form-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .form-hint {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    font-weight: 400;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 10px 12px;
+    font-family: var(--f-mono);
+    font-size: 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-primary);
+    transition: border-color 0.2s ease;
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+  }
+
+  .form-input.text {
+    font-family: var(--f-body);
+    text-align: left;
+  }
+
+  select {
+    width: 100%;
+    padding: 10px 12px;
+    font-family: var(--f-body);
+    font-size: 13px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+  }
+
+  select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     버튼
+     ══════════════════════════════════════════════════════════════ */
+  .btn {
+    appearance: none;
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.03em;
+  }
+
+  .btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    box-shadow: var(--shadow-md);
+  }
+
+  .btn.primary {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  .btn.primary:hover {
+    opacity: 0.9;
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     아코디언
+     ══════════════════════════════════════════════════════════════ */
+  details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  summary {
+    cursor: pointer;
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary);
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  summary::after {
+    content: "▼";
+    font-size: 10px;
+    color: var(--text-secondary);
+    transition: transform 0.2s ease;
+  }
+
+  details[open] summary::after {
+    transform: rotate(180deg);
+  }
+
+  details .detail-content {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .detail-table {
+    width: 100%;
+    margin-top: 12px;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .detail-table th,
+  .detail-table td {
+    padding: 8px 10px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .detail-table th:first-child,
+  .detail-table td:first-child {
+    text-align: left;
+  }
+
+  .detail-table th {
+    background: var(--bg);
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     유틸리티
+     ══════════════════════════════════════════════════════════════ */
+  .row-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 640px) {
+    .row-2col {
+      grid-template-columns: 1fr;
+    }
+
+    .header-top {
+      flex-direction: column;
+    }
+
+    .meta {
+      text-align: left;
+      margin-top: 8px;
+    }
+
+    .result-row {
+      grid-template-columns: 1fr;
+    }
+
+    .pgrid {
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    }
+
+    .result-value {
+      font-size: 22px;
+    }
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+  }
+
+  .tip {
+    background: var(--primary-light);
+    border-left: 3px solid var(--primary);
+    border-radius: 0 4px 4px 0;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--text-primary);
+    line-height: 1.5;
+  }
+
+  .tip.warning {
+    background: #FFF3E0;
+    border-left-color: var(--warning);
+  }
+
+  footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    transform: translate(-50%, 100px);
+    background: var(--primary);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 1000;
+    pointer-events: none;
+    transition: transform 0.2s ease;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .toast.show {
+    transform: translate(-50%, 0);
+  }
+
+  @media print {
+    .noprint { display: none !important; }
+    body { background: white; }
+    .result-card { border: 1px solid #ccc; box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <!-- 헤더 -->
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <h1>굿즈 마진 계산</h1>
+        <p class="header-sub">정산서 기준 실제 수익을 계산합니다</p>
+      </div>
+      <div class="meta">
+        v2.1<br>
+        <span id="dataDate">기준: 2026-08</span><br>
+        VAT 포함
+      </div>
+    </div>
+  </div>
+
+  <!-- 현재 계산 중인 상품 -->
+  <div id="currentProduct" style="display: none; margin-bottom: 24px; padding: 20px; background: var(--primary-light); border-left: 4px solid var(--primary); border-radius: 4px;">
+    <div style="color: var(--text-tertiary); font-size: 12px; letter-spacing: 0.1em; margin-bottom: 6px;">현재 계산 중</div>
+    <div style="font-size: 26px; font-weight: 700; color: var(--primary);" id="currentProductName"></div>
+  </div>
+
+  <!-- 빠른 시뮬레이터 -->
+  <div class="result-card" style="background: var(--primary-light); border: 2px solid var(--primary);">
+    <div class="section-title" style="color: var(--primary);">⚡ 빠른 시뮬레이션</div>
+    <div class="row-2col" style="margin-top: 12px;">
+      <div>
+        <div class="form-label">상품명</div>
+        <input type="text" class="form-input text" id="simName" placeholder="예) 신상품">
+      </div>
+      <div>
+        <div class="form-label">판매가</div>
+        <input type="text" inputmode="numeric" class="form-input tn" id="simPrice" value="12000" placeholder="0">
+      </div>
+      <div>
+        <div class="form-label">제작 원가</div>
+        <input type="text" inputmode="numeric" class="form-input tn" id="simCost" value="2838" placeholder="0">
+      </div>
+      <div>
+        <div class="form-label">판매 수량</div>
+        <input type="text" inputmode="numeric" class="form-input tn" id="simSold" value="1000" placeholder="0">
+      </div>
+      <div>
+        <div class="form-label">고객이 낸 배송비</div>
+        <input type="text" inputmode="numeric" class="form-input tn" id="simShipRev" value="4000" placeholder="0">
+      </div>
+      <div>
+        <div class="form-label">상품 유형</div>
+        <select id="simKind">
+          <option value="2.2">유형상품 · 현장수령 (2.2%)</option>
+          <option value="7.7">무형상품 · 멤버십 (7.7%)</option>
+          <option value="22">POP 이용권 (22%)</option>
+          <option value="38.5">스티커 샵 (38.5%)</option>
+        </select>
+      </div>
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap;">
+      <button class="btn primary" id="btnSimulate">계산</button>
+      <button class="btn" id="btnSaveSim">💾 저장</button>
+      <button class="btn" id="btnLoadSim">📂 불러오기</button>
+    </div>
+    <div id="savedList" style="margin-top: 16px;"></div>
+  </div>
+
+  <!-- 상품 선택 -->
+  <div style="margin-top: 32px;">
+    <div class="section-title">기존 상품으로 계산</div>
+    <div class="pgrid" id="pgrid" role="radiogroup"></div>
+  </div>
+
+  <!-- 결과 요약 -->
+  <div class="result-card">
+    <div class="result-row">
+      <div class="result-item">
+        <div class="result-label">판매가</div>
+        <div class="result-value tn" id="dispPrice">12,000원</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">개당 순이익</div>
+        <div class="result-value success tn" id="dispProfit">7,177원</div>
+      </div>
+    </div>
+    <div class="result-row">
+      <div class="result-item">
+        <div class="result-label">이익률</div>
+        <div class="result-value success tn" id="dispMargin">59.8%</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">전체 순이익</div>
+        <div class="result-value success tn" id="dispTotal">32,296,500원</div>
+        <div class="result-sub" id="dispTotalQty"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 탭 패널 -->
+  <div class="tabs" role="tablist">
+    <button class="tab-btn" role="tab" aria-selected="true" aria-controls="tab-calc" id="tab-calc-btn">계산</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-input" id="tab-input-btn">입력</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-detail" id="tab-detail-btn">상세</button>
+  </div>
+
+  <!-- 탭: 계산 결과 -->
+  <div class="tab-pane" id="tab-calc" role="tabpanel" data-active="true">
+    <div class="result-card">
+      <div class="section-title">항목별 계산 (1건)</div>
+      <div id="calcDetails" style="margin-top: 12px;"></div>
+    </div>
+
+    <div class="result-card">
+      <div class="section-title">전체 손익 요약</div>
+      <div id="totalsDisplay" style="margin-top: 12px;"></div>
+    </div>
+
+    <div class="result-card noprint" style="margin-top: 24px;">
+      <div class="section-title">내보내기</div>
+      <div style="display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
+        <button class="btn primary" id="btnCopy">요약 복사</button>
+        <button class="btn" id="btnCsv">CSV 저장</button>
+        <button class="btn" id="btnPrint">인쇄</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 탭: 입력값 -->
+  <div class="tab-pane" id="tab-input" role="tabpanel" data-active="false">
+    <div class="result-card">
+      <div class="section-title">기본 정보</div>
+
+      <div class="form-group">
+        <label class="form-label">
+          <span>상품명</span>
+        </label>
+        <input type="text" class="form-input text" id="pname" placeholder="예) 9월 월간 포토카드">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">판매가</label>
+        <input type="text" inputmode="numeric" class="form-input tn" id="price" value="12,000">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">제작 원가</label>
+        <input type="text" inputmode="numeric" class="form-input tn" id="cost" value="2,838">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">고객이 낸 배송비</label>
+        <input type="text" inputmode="numeric" class="form-input tn" id="shipRev" value="4,000">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
+          <span>고정비</span>
+          <span class="form-hint">디자인·세팅비 등</span>
+        </label>
+        <input type="text" inputmode="numeric" class="form-input tn" id="fixed" value="0">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">제작 수량</label>
+        <input type="text" inputmode="numeric" class="form-input tn" id="made" value="4,500">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">판매 수량</label>
+        <input type="text" inputmode="numeric" class="form-input tn" id="sold" value="4,500">
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-title">수수료 · 비용</div>
+
+      <div class="form-group">
+        <label class="form-label">상품 유형</label>
+        <select id="kind">
+          <option value="2.2" selected>유형상품 · 현장수령 (2.2%)</option>
+          <option value="7.7">무형상품 · 멤버십 (7.7%)</option>
+          <option value="22">POP 이용권 (22%)</option>
+          <option value="38.5">스티커 샵 (38.5%)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">PG 수수료</label>
+        <input type="number" class="form-input tn" id="pg" value="4" min="0" max="100" step="0.1">
+      </div>
+
+
+      <div class="form-group">
+        <label class="form-label">한컴 대행</label>
+        <input type="number" class="form-input tn" id="hc" value="5" min="0" max="100" step="0.1">
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-title">물류비 (1건당)</div>
+
+      <div class="form-group">
+        <label class="form-label">출고 작업비</label>
+        <input type="text" inputmode="numeric" class="form-input tn" id="pack" value="1,000">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">배송비</label>
+        <input type="text" inputmode="numeric" class="form-input tn" id="ship" value="2,850">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">부자재비</label>
+        <input type="text" inputmode="numeric" class="form-input tn" id="mat" value="394">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">입고·보관</label>
+        <input type="text" inputmode="numeric" class="form-input tn" id="ovh" value="32">
+      </div>
+
+      <div style="margin-top: 24px;">
+        <button class="btn primary" id="btnApply">계산</button>
+        <button class="btn" id="btnReset" style="margin-left: 8px;">초기화</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 탭: 상세 정보 -->
+  <div class="tab-pane" id="tab-detail" role="tabpanel" data-active="false">
+    <details open>
+      <summary>배송비를 매출에 포함하는 이유</summary>
+      <div class="detail-content">
+        <p><strong>배송비 포함 기준이 정산서 기준입니다.</strong></p>
+        <p style="margin: 8px 0 0 0;">b.stage 정산서의 "총결제금액"은 배송비가 이미 포함되어 있고, 수수료도 이 금액에 붙습니다. 배송비를 빼고 계산하면 실제 나가는 수수료보다 적게 잡히게 됩니다.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>VAT 처리 기준</summary>
+      <div class="detail-content">
+        <p>모든 금액은 VAT 포함입니다.</p>
+        <table class="detail-table">
+          <tr>
+            <th>항목</th>
+            <th>기준</th>
+          </tr>
+          <tr>
+            <td>판매가</td>
+            <td>소비자 결제액 (VAT 포함)</td>
+          </tr>
+          <tr>
+            <td>제작 원가</td>
+            <td>견적서 × 1.1</td>
+          </tr>
+          <tr>
+            <td>수수료</td>
+            <td>정산서 기준 (VAT 포함)</td>
+          </tr>
+          <tr>
+            <td>물류비</td>
+            <td>인보이스 × 1.1</td>
+          </tr>
+        </table>
+      </div>
+    </details>
+
+    <details>
+      <summary>물류비 기준 (2026-01 기준)</summary>
+      <div class="detail-content">
+        <p>국내 배송 기준입니다.</p>
+        <table class="detail-table">
+          <tr>
+            <th>항목</th>
+            <th>건당</th>
+          </tr>
+          <tr>
+            <td>출고 작업비</td>
+            <td>1,100원</td>
+          </tr>
+          <tr>
+            <td>택배비</td>
+            <td>2,667원</td>
+          </tr>
+          <tr>
+            <td>부자재</td>
+            <td>394원</td>
+          </tr>
+          <tr>
+            <td>입고·보관</td>
+            <td>32원</td>
+          </tr>
+          <tr style="font-weight: 700; border-top: 2px solid var(--border);">
+            <td>합계</td>
+            <td>4,193원</td>
+          </tr>
+        </table>
+      </div>
+    </details>
+
+    <div style="margin-top: 20px; padding: 12px 14px; background: var(--primary-light); border-radius: 4px; font-size: 12px; color: var(--text-secondary); line-height: 1.6;">
+      <strong>데이터 출처:</strong> 비마이프렌즈 1월 물류정산서 · b.stage 정산 명세서
+    </div>
+  </div>
+
+  <footer>
+    <p>한화생명 굿즈 판매 수익성 분석 도구 v2.1</p>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // 기본 데이터 (원가 = 기본 제작비 × 1.25 × 1.1 = 제작비 + 25% 대행수수료 + 10% VAT)
+  const products = [
+    { id: 'monthly', name: '월간 포토카드', price: 12000, cost: 3903, sold: 4500, made: 4500, costFormula: '2,838 × 1.25 × 1.1' },
+    { id: 'bromaides', name: '브로마이드 세트 (2장)', price: 12000, cost: 4510, sold: 3200, made: 3500, costFormula: '3,280 × 1.25 × 1.1' },
+    { id: 'postcard', name: 'MSI 기념 엽서', price: 5000, cost: 1650, sold: 2100, made: 2500, costFormula: '1,200 × 1.25 × 1.1' },
+    { id: 'bandana', name: 'MSI 이벤트 반다나', price: 12000, cost: 5500, sold: 1000, made: 1000, costFormula: '4,000 × 1.25 × 1.1' },
+  ];
+
+  let currentProduct = products[0];
+  let settings = {
+    kind: 2.2,    // 수수료율
+    pg: 4,        // PG 수수료
+    bs: 2.2,      // 비스테이지
+    hc: 5,        // 한컴 대행
+    pack: 1100,   // 출고
+    ship: 2667,   // 배송
+    mat: 394,     // 부자재
+    ovh: 32,      // 입고보관
+  };
+
+  // DOM 요소
+  const pgrid = document.getElementById('pgrid');
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabPanes = document.querySelectorAll('.tab-pane');
+
+  // 상품 그리드 초기화
+  function initProducts() {
+    pgrid.innerHTML = products.map(p => `
+      <button class="pcard" role="radio" aria-checked="${p.id === currentProduct.id}" data-id="${p.id}">
+        <div class="pcard-name">${p.name}</div>
+        <div class="pcard-price">${p.price.toLocaleString()}원</div>
+        <div class="pcard-qty">${p.sold.toLocaleString()}개</div>
+      </button>
+    `).join('');
+
+    pgrid.querySelectorAll('.pcard').forEach(btn => {
+      btn.addEventListener('click', () => selectProduct(btn.dataset.id));
+    });
+
+    updateDisplay();
+  }
+
+  // 상품 선택
+  function selectProduct(id) {
+    currentProduct = products.find(p => p.id === id);
+    updateFormValues();
+    initProducts();
+    updateDisplay();
+  }
+
+  // 폼에 값 채우기
+  function updateFormValues() {
+    document.getElementById('pname').value = currentProduct.name;
+    document.getElementById('price').value = currentProduct.price.toLocaleString();
+    document.getElementById('cost').value = currentProduct.cost.toLocaleString();
+    document.getElementById('made').value = currentProduct.made.toLocaleString();
+    document.getElementById('sold').value = currentProduct.sold.toLocaleString();
+    document.getElementById('shipRev').value = '4,000'; // 기본값
+  }
+
+  // 계산 (배송비 포함)
+  function calculate() {
+    const price = parseFloat(document.getElementById('price').value.replace(/,/g, '')) || 0;
+    const shipRev = parseFloat(document.getElementById('shipRev').value.replace(/,/g, '')) || 0;
+    const cost = parseFloat(document.getElementById('cost').value.replace(/,/g, '')) || 0;
+    const fixed = parseFloat(document.getElementById('fixed').value.replace(/,/g, '')) || 0;
+    const sold = parseFloat(document.getElementById('sold').value.replace(/,/g, '')) || 0;
+    const made = parseFloat(document.getElementById('made').value.replace(/,/g, '')) || 0;
+
+    const kind = parseFloat(document.getElementById('kind').value);
+    const pg = parseFloat(document.getElementById('pg').value) / 100;
+    const hc = parseFloat(document.getElementById('hc').value) / 100;
+
+    const pack = parseFloat(document.getElementById('pack').value.replace(/,/g, '')) || 0;
+    const ship = parseFloat(document.getElementById('ship').value.replace(/,/g, '')) || 0;
+    const mat = parseFloat(document.getElementById('mat').value.replace(/,/g, '')) || 0;
+    const ovh = parseFloat(document.getElementById('ovh').value.replace(/,/g, '')) || 0;
+
+    // 총 매출 (상품가 + 배송비)
+    const totalRevenue = price + shipRev;
+
+    // 수수료 계산 (총 매출 기준)
+    // 상품 유형 = 플랫폼 서비스 수수료 (비스테이지 포함)
+    const kindFee = totalRevenue * (kind / 100);
+    const pgFee = totalRevenue * pg;
+    const hcFee = totalRevenue * (kind / 100) * (hc / 100);  // kind 기준으로 계산
+    const totalFee = kindFee + pgFee + hcFee;
+
+    // 로지스틱 비용
+    const logiCost = pack + ship + mat + ovh;
+
+    // 개당 순이익 (배송비 포함한 매출 기준)
+    const profitPerUnit = (price + shipRev) - cost - logiCost - totalFee - (fixed / sold);
+    const totalProfit = profitPerUnit * sold;
+
+    // 마진율
+    const marginRate = (profitPerUnit / price) * 100;
+
+    // 디스플레이 업데이트
+    document.getElementById('dispPrice').textContent = price.toLocaleString() + '원';
+    document.getElementById('dispProfit').textContent = Math.round(profitPerUnit).toLocaleString() + '원';
+    document.getElementById('dispMargin').textContent = Math.round(marginRate * 10) / 10 + '%';
+    document.getElementById('dispTotal').textContent = Math.round(totalProfit).toLocaleString() + '원';
+    document.getElementById('dispTotalQty').textContent = sold.toLocaleString() + '개 판매';
+
+    // 상세 계산
+    displayCalcDetails(price, cost, profitPerUnit, sold, totalProfit, totalFee, logiCost, shipRev);
+  }
+
+  function displayCalcDetails(price, cost, profit, sold, totalProfit, fees, logi, shipRev) {
+    const html = `
+      <div style="font-size: 13px; line-height: 1.8;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div>
+            <div style="margin-bottom: 8px;">
+              <div style="color: var(--text-secondary); font-size: 12px;">상품 판매가</div>
+              <div class="tn" style="font-size: 18px; font-weight: 600;">+${price.toLocaleString()}원</div>
+            </div>
+          </div>
+          <div>
+            <div style="margin-bottom: 8px;">
+              <div style="color: var(--text-secondary); font-size: 12px;">배송비 (고객부담)</div>
+              <div class="tn" style="font-size: 18px; font-weight: 600; color: var(--success);">+${shipRev.toLocaleString()}원</div>
+            </div>
+          </div>
+          <div>
+            <div style="margin-bottom: 8px;">
+              <div style="color: var(--text-secondary); font-size: 12px;">원가
+                <span style="font-size: 11px; color: var(--text-tertiary); font-weight: 400;">(제작비 + 수수료 25% + VAT 10%)</span>
+              </div>
+              <div class="tn" style="font-size: 18px; font-weight: 600; color: var(--danger);">−${cost.toLocaleString()}원</div>
+            </div>
+          </div>
+          <div>
+            <div style="margin-bottom: 8px;">
+              <div style="color: var(--text-secondary); font-size: 12px;">수수료
+                <span style="font-size: 11px; color: var(--text-tertiary); font-weight: 400;">(상품 유형 + PG 4% + 한컴 대행 5%)</span>
+              </div>
+              <div class="tn" style="font-size: 18px; font-weight: 600; color: var(--danger);">−${Math.round(fees).toLocaleString()}원</div>
+            </div>
+          </div>
+          <div>
+            <div style="margin-bottom: 8px;">
+              <div style="color: var(--text-secondary); font-size: 12px;">물류비
+                <span style="font-size: 11px; color: var(--text-tertiary); font-weight: 400;">(출고 + 배송 + 부자재 + 입고)</span>
+              </div>
+              <div class="tn" style="font-size: 18px; font-weight: 600; color: var(--danger);">−${Math.round(logi).toLocaleString()}원</div>
+            </div>
+          </div>
+        </div>
+        <div style="border-top: 2px solid var(--border); margin-top: 16px; padding-top: 16px; text-align: center;">
+          <div style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">개당 순이익</div>
+          <div class="tn" style="font-size: 24px; font-weight: 700; color: var(--success);">${Math.round(profit).toLocaleString()}원</div>
+        </div>
+      </div>
+    `;
+    document.getElementById('calcDetails').innerHTML = html;
+  }
+
+  function displayTotals() {
+    const sold = parseFloat(document.getElementById('sold').value.replace(/,/g, '')) || 0;
+    const profit = parseFloat(document.getElementById('dispProfit').textContent.replace(/,/g, '').replace('원', ''));
+    const total = profit * sold;
+
+    const html = `
+      <div style="font-size: 13px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div>
+            <div style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">판매 수량</div>
+            <div class="tn" style="font-size: 20px; font-weight: 600;">${sold.toLocaleString()}개</div>
+          </div>
+          <div>
+            <div style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">전체 순이익</div>
+            <div class="tn" style="font-size: 20px; font-weight: 600; color: var(--success);">${Math.round(total).toLocaleString()}원</div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('totalsDisplay').innerHTML = html;
+  }
+
+  function updateDisplay() {
+    calculate();
+    displayTotals();
+    updateCurrentProductDisplay();
+  }
+
+  // 현재 계산 중인 상품 표시
+  function updateCurrentProductDisplay() {
+    const productName = document.getElementById('pname').value || '무제';
+    const currentPanel = document.getElementById('currentProduct');
+    const nameDisplay = document.getElementById('currentProductName');
+
+    if (productName && productName !== '무제') {
+      currentPanel.style.display = 'block';
+      nameDisplay.textContent = productName;
+    } else {
+      currentPanel.style.display = 'none';
+    }
+  }
+
+  // 탭 전환
+  tabBtns.forEach((btn, idx) => {
+    btn.addEventListener('click', () => {
+      tabBtns.forEach(b => b.setAttribute('aria-selected', 'false'));
+      tabPanes.forEach(p => p.setAttribute('data-active', 'false'));
+      btn.setAttribute('aria-selected', 'true');
+      tabPanes[idx].setAttribute('data-active', 'true');
+    });
+  });
+
+  // 버튼 이벤트
+  document.getElementById('btnApply').addEventListener('click', updateDisplay);
+  document.getElementById('btnReset').addEventListener('click', () => {
+    updateFormValues();
+    updateDisplay();
+  });
+
+  document.getElementById('btnCopy').addEventListener('click', () => {
+    const price = document.getElementById('dispPrice').textContent;
+    const profit = document.getElementById('dispProfit').textContent;
+    const margin = document.getElementById('dispMargin').textContent;
+    const total = document.getElementById('dispTotal').textContent;
+    const text = `굿즈 마진 계산 결과\n판매가: ${price}\n개당 순이익: ${profit}\n이익률: ${margin}\n전체 순이익: ${total}`;
+    navigator.clipboard.writeText(text);
+    showToast('복사되었습니다');
+  });
+
+  document.getElementById('btnPrint').addEventListener('click', () => window.print());
+
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+
+  // 입력값 실시간 계산
+  ['price', 'cost', 'fixed', 'sold', 'made', 'kind', 'pg', 'hc', 'pack', 'ship', 'mat', 'ovh', 'shipRev'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateDisplay);
+  });
+
+  // ══════════════════════════════════════════════════════════════
+  // 시뮬레이터
+  // ══════════════════════════════════════════════════════════════
+  function simulateFromQuickForm() {
+    const name = document.getElementById('simName').value || '새 시뮬레이션';
+    const price = parseFloat(document.getElementById('simPrice').value.replace(/,/g, '')) || 0;
+    const shipRev = parseFloat(document.getElementById('simShipRev').value.replace(/,/g, '')) || 0;
+    const cost = parseFloat(document.getElementById('simCost').value.replace(/,/g, '')) || 0;
+    const sold = parseFloat(document.getElementById('simSold').value.replace(/,/g, '')) || 0;
+    const kind = parseFloat(document.getElementById('simKind').value);
+
+    // 고정 수수료와 물류비 사용
+    const pg = 0.04;
+    const bs = 0.022;
+    const hc = 0.05;
+
+    const pack = 1100;
+    const ship = 2667;
+    const mat = 394;
+    const ovh = 32;
+
+    const totalRevenue = price + shipRev;
+    const kindFee = totalRevenue * (kind / 100);
+    const pgFee = totalRevenue * pg;
+    const bsFee = totalRevenue * bs;
+    const hcFee = totalRevenue * bs * (hc / 100);
+    const totalFee = kindFee + pgFee + bsFee + hcFee;
+
+    const logiCost = pack + ship + mat + ovh;
+    const profitPerUnit = (price + shipRev) - cost - logiCost - totalFee;
+    const totalProfit = profitPerUnit * sold;
+    const marginRate = (profitPerUnit / price) * 100;
+
+    // 폼에 입력
+    document.getElementById('pname').value = name;
+    document.getElementById('price').value = price.toLocaleString();
+    document.getElementById('cost').value = cost.toLocaleString();
+    document.getElementById('shipRev').value = shipRev.toLocaleString();
+    document.getElementById('sold').value = sold.toLocaleString();
+    document.getElementById('kind').value = kind;
+
+    updateDisplay();
+    updateCurrentProductDisplay();
+
+    // 결과 탭으로 이동
+    document.getElementById('tab-calc-btn').click();
+    showToast(`"${name}" 계산 완료`);
+  }
+
+
+  // 저장된 목록 표시
+  function loadSavedList() {
+    const saved = JSON.parse(localStorage.getItem('savedSims') || '[]');
+    const container = document.getElementById('savedList');
+
+    if (saved.length === 0) {
+      container.innerHTML = `<div style="
+        text-align: center;
+        padding: 20px 16px;
+        background: var(--bg);
+        border-radius: 6px;
+        border: 1px dashed var(--border);
+        color: var(--text-secondary);
+        font-size: 12px;
+      ">📋 저장된 시뮬레이션이 없습니다</div>`;
+      return;
+    }
+
+    const html = `<div style="display: flex; flex-direction: column; gap: 8px;">
+      ${saved.map((item, idx) => `
+        <div class="saved-card" style="
+          background: linear-gradient(135deg, #f8fafb 0%, #f0f2f5 100%);
+          border: 1px solid #e0e3e8;
+          border-radius: 8px;
+          padding: 14px;
+          transition: all 0.2s ease;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+        "
+        onmouseover="this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1); this.style.borderColor='#003DA5'"
+        onmouseout="this.style.boxShadow='0 1px 2px rgba(0,0,0,0.04); this.style.borderColor='#e0e3e8'">
+          <div style="flex: 1;">
+            <div style="
+              font-weight: 600;
+              font-size: 14px;
+              color: #003DA5;
+              margin-bottom: 6px;
+              word-break: break-word;
+            ">${escapeHtml(item.name)}</div>
+            <div style="
+              display: flex;
+              gap: 14px;
+              font-size: 12px;
+              color: #666;
+              flex-wrap: wrap;
+            ">
+              <span><strong>${item.profit.toLocaleString()}</strong>원</span>
+              <span><strong>${item.margin.toFixed(1)}</strong>% 마진</span>
+              <span style="color: #999;">📅 ${item.timestamp}</span>
+            </div>
+          </div>
+          <div style="
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+          ">
+            <button class="btn" style="
+              padding: 6px 12px;
+              font-size: 12px;
+              background: #003DA5;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+              transition: all 0.2s;
+              font-weight: 600;
+            "
+            onmouseover="this.style.background='#002680'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'"
+            onmouseout="this.style.background='#003DA5'; this.style.boxShadow='none'"
+            onclick="loadSimulation(${idx})">
+              불러오기
+            </button>
+
+            <button class="btn" style="
+              padding: 6px 12px;
+              font-size: 12px;
+              background: #f0f0f0;
+              color: #333;
+              border: 1px solid #d0d0d0;
+              border-radius: 4px;
+              cursor: pointer;
+              transition: all 0.2s;
+              font-weight: 600;
+            "
+            onmouseover="this.style.background='#e6e6e6'; this.style.borderColor='#999'"
+            onmouseout="this.style.background='#f0f0f0'; this.style.borderColor='#d0d0d0'"
+            onclick="editSimulation(${idx})">
+              수정
+            </button>
+
+            <button class="btn" style="
+              padding: 6px 12px;
+              font-size: 12px;
+              background: #fff0f0;
+              color: #d32f2f;
+              border: 1px solid #ffcdd2;
+              border-radius: 4px;
+              cursor: pointer;
+              transition: all 0.2s;
+              font-weight: 600;
+            "
+            onmouseover="this.style.background='#ffebee'; this.style.borderColor='#d32f2f'"
+            onmouseout="this.style.background='#fff0f0'; this.style.borderColor='#ffcdd2'"
+            onclick="deleteSim(${idx})">
+              삭제
+            </button>
+          </div>
+        </div>
+      `).join('')}
+    </div>`;
+
+    container.innerHTML = html;
+  }
+
+  // HTML 이스케이프 함수 (XSS 방지)
+  function escapeHtml(text) {
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+  }
+
+  // 현재 편집 중인 인덱스
+  let currentEditIdx = null;
+
+  // 시뮬레이션 불러오기
+  function loadSimulation(idx) {
+    const saved = JSON.parse(localStorage.getItem('savedSims') || '[]');
+    const data = saved[idx];
+
+    if (!data) return;
+
+    document.getElementById('pname').value = data.name;
+    document.getElementById('price').value = data.price.toLocaleString();
+    document.getElementById('cost').value = data.cost.toLocaleString();
+    document.getElementById('shipRev').value = data.shipRev.toLocaleString();
+    document.getElementById('sold').value = data.sold.toLocaleString();
+    document.getElementById('made').value = data.made.toLocaleString();
+    document.getElementById('kind').value = data.kind;
+
+    currentEditIdx = null;
+    updateDisplay();
+    updateCurrentProductDisplay();
+    document.getElementById('tab-calc-btn').click();
+    showToast(`"${data.name}" 불러옴`);
+  }
+
+  // 시뮬레이션 수정 모드
+  function editSimulation(idx) {
+    const saved = JSON.parse(localStorage.getItem('savedSims') || '[]');
+    const data = saved[idx];
+
+    if (!data) return;
+
+    currentEditIdx = idx;
+
+    document.getElementById('pname').value = data.name;
+    document.getElementById('price').value = data.price.toLocaleString();
+    document.getElementById('cost').value = data.cost.toLocaleString();
+    document.getElementById('shipRev').value = data.shipRev.toLocaleString();
+    document.getElementById('sold').value = data.sold.toLocaleString();
+    document.getElementById('made').value = data.made.toLocaleString();
+    document.getElementById('kind').value = data.kind;
+
+    updateDisplay();
+    updateCurrentProductDisplay();
+    document.getElementById('tab-input-btn').click();
+    showToast(`"${data.name}" 수정 모드 활성화`);
+  }
+
+  // 저장 함수 개선 (수정 지원)
+  function saveSimulation() {
+    const name = document.getElementById('pname').value || '무제';
+    const newData = {
+      name,
+      price: parseFloat(document.getElementById('price').value.replace(/,/g, '')) || 0,
+      cost: parseFloat(document.getElementById('cost').value.replace(/,/g, '')) || 0,
+      shipRev: parseFloat(document.getElementById('shipRev').value.replace(/,/g, '')) || 0,
+      sold: parseFloat(document.getElementById('sold').value.replace(/,/g, '')) || 0,
+      made: parseFloat(document.getElementById('made').value.replace(/,/g, '')) || 0,
+      kind: parseFloat(document.getElementById('kind').value),
+      profit: Math.round(parseFloat(document.getElementById('dispProfit').textContent.replace(/,/g, '').replace('원', ''))),
+      margin: parseFloat(document.getElementById('dispMargin').textContent.replace('%', '')),
+      timestamp: new Date().toLocaleString('ko-KR'),
+    };
+
+    let saved = JSON.parse(localStorage.getItem('savedSims') || '[]');
+
+    if (currentEditIdx !== null && currentEditIdx >= 0 && currentEditIdx < saved.length) {
+      // 기존 항목 수정
+      saved[currentEditIdx] = newData;
+      showToast(`"${name}" 수정 완료`);
+    } else {
+      // 새 항목 추가
+      saved.push(newData);
+      showToast(`"${name}" 저장됨`);
+    }
+
+    localStorage.setItem('savedSims', JSON.stringify(saved));
+    currentEditIdx = null;
+    loadSavedList();
+  }
+
+  // 삭제
+  function deleteSim(idx) {
+    const saved = JSON.parse(localStorage.getItem('savedSims') || '[]');
+    if (idx < 0 || idx >= saved.length) return;
+
+    const itemName = saved[idx].name;
+    if (confirm(`"${itemName}"를(을) 삭제하시겠습니까?`)) {
+      saved.splice(idx, 1);
+      localStorage.setItem('savedSims', JSON.stringify(saved));
+      loadSavedList();
+      showToast('삭제되었습니다');
+    }
+  }
+
+  // 시뮬레이터 이벤트
+  document.getElementById('btnSimulate').addEventListener('click', simulateFromQuickForm);
+  document.getElementById('btnSaveSim').addEventListener('click', saveSimulation);
+  document.getElementById('btnLoadSim').addEventListener('click', loadSavedList);
+
+  // 초기화
+  initProducts();
+  loadSavedList();
+</script>
+
+</body>
+</html>
