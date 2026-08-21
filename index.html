@@ -621,6 +621,19 @@
     <div class="button-group">
       <button class="btn btn-primary" id="btnSimulate">계산</button>
       <button class="btn btn-secondary" id="btnSaveSim">💾 저장</button>
+      <button class="btn btn-secondary" id="btnSuggestPrice" style="background: linear-gradient(135deg, #FF9500 0%, #FF6B6B 100%); color: white; border: none;">💡 판가 제안</button>
+    </div>
+
+    <!-- 판가 제안 결과 -->
+    <div id="pricesuggestion" style="display: none; margin-top: 16px; background: linear-gradient(135deg, rgba(255, 149, 0, 0.1) 0%, rgba(255, 107, 107, 0.1) 100%); border-radius: 12px; padding: 16px; border-left: 4px solid #FF9500;">
+      <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 12px; font-size: 15px;">💡 AI 판가 제안</div>
+
+      <div id="suggestionContent"></div>
+
+      <div style="display: flex; gap: 8px; margin-top: 12px;">
+        <button class="btn btn-secondary btn-small" id="btnApplySuggestion">제안 적용</button>
+        <button class="btn btn-secondary btn-small" id="btnCloseSuggestion">닫기</button>
+      </div>
     </div>
   </div>
 
@@ -698,10 +711,10 @@
 
 <script>
   const products = [
-    { id: 'monthly', name: '월간 포토카드', price: 12000, cost: 3903, sold: 3000, made: 4500 },
-    { id: 'bromaides', name: '브로마이드 세트 (2장)', price: 12000, cost: 4510, sold: 1100, made: 3500 },
-    { id: 'postcard', name: 'MSI 기념 엽서', price: 5000, cost: 1650, sold: 3500, made: 2500 },
-    { id: 'bandana', name: 'MSI 이벤트 반다나', price: 12000, cost: 5500, sold: 800, made: 1000 },
+    { id: 'monthly', name: '월간 포토카드', price: 12000, cost: 3903, sold: 1000, made: 4500 },
+    { id: 'bromaides', name: '브로마이드 세트 (2장)', price: 12000, cost: 4510, sold: 1000, made: 3500 },
+    { id: 'postcard', name: 'MSI 기념 엽서', price: 5000, cost: 1650, sold: 1000, made: 2500 },
+    { id: 'bandana', name: 'MSI 이벤트 반다나', price: 12000, cost: 5500, sold: 1000, made: 1000 },
   ];
 
   let currentProduct = products[0];
@@ -1035,9 +1048,165 @@
     setTimeout(() => toast.classList.remove('show'), 2000);
   }
 
+  // 판가 제안 시스템
+  function suggestPrice() {
+    const name = document.getElementById('simName').value || '신상품';
+    const cost = parseFloat(document.getElementById('simCost').value.replace(/,/g, '')) || 0;
+    const sold = parseFloat(document.getElementById('simSold').value.replace(/,/g, '')) || 1000;
+
+    if (!cost) {
+      showToast('원가를 입력해주세요');
+      return;
+    }
+
+    // 기존 상품 마진률 분석 (1000개 판매 기준)
+    const margins = products.map(p => {
+      const { profitPerUnit } = calculate(p.price, p.cost, 4000, 1000, settings.kind);
+      return (profitPerUnit / p.price) * 100;
+    });
+    const avgMargin = margins.reduce((a, b) => a + b) / margins.length; // 약 60%
+
+    // 시장 분석
+    const marketAnalysis = analyzeMarket(name);
+
+    // 제안 판가 계산 (1000개 기준, 평균 마진율 유지)
+    const logiCost = settings.pack + settings.ship + settings.mat + settings.ovh;
+    const kind = parseFloat(document.getElementById('simKind').value);
+
+    // 목표 마진률로 역계산
+    // profit = (price + shipRev) - cost - logi - (kind% + pg% + hc%) * (price + shipRev)
+    // profit = price * (1 - margin) 라고 가정
+    // 실제로는 복잡하므로, 비율 기반으로 근사치 계산
+
+    const targetProfit = (cost + logiCost) / (1 - avgMargin / 100) * (avgMargin / 100);
+    const suggestedPrice = Math.ceil((cost + logiCost + targetProfit) / 1000) * 1000;
+
+    displaySuggestion(name, suggestedPrice, marketAnalysis, cost, avgMargin);
+  }
+
+  // 시장 분석
+  function analyzeMarket(productName) {
+    const name = productName.toLowerCase();
+
+    if (name.includes('포토카드') || name.includes('카드') || name.includes('사진')) {
+      return {
+        category: 'K-POP 굿즈 시장',
+        priceRange: '8,000~15,000원',
+        reason: '포토카드/사진 굿즈는 팬덤 시장에서 가장 인기 있는 아이템으로, 일반적으로 8,000~15,000원대의 가격대를 유지합니다.',
+        competitors: '포토카드세트(9,900~15,000원), 플레이트(10,000~12,000원)'
+      };
+    } else if (name.includes('반다나') || name.includes('밴드') || name.includes('악세서리')) {
+      return {
+        category: '스포츠/이벤트 굿즈 시장',
+        priceRange: '8,000~15,000원',
+        reason: '스포츠 이벤트 굿즈인 반다나/악세서리는 경기장 판매 및 온라인 굿즈로 8,000~15,000원대가 표준입니다.',
+        competitors: '응원용품(8,000~12,000원), 팬 악세서리(10,000~15,000원)'
+      };
+    } else if (name.includes('브로마이드') || name.includes('포스터')) {
+      return {
+        category: 'K-POP 굿즈 시장',
+        priceRange: '10,000~13,000원',
+        reason: '브로마이드/포스터는 프리미엄 컬렉팅 아이템으로, 세트 상품일수록 높은 가격대를 유지합니다.',
+        competitors: '브로마이드세트(10,000~13,000원), 굿즈박스(15,000~20,000원)'
+      };
+    } else if (name.includes('엽서') || name.includes('엽필') || name.includes('편지')) {
+      return {
+        category: '기념품/문구 시장',
+        priceRange: '3,000~8,000원',
+        reason: '엽서는 저가 수집 아이템으로, 일반적으로 3,000~8,000원대의 가격대입니다.',
+        competitors: '일반엽서(3,000~5,000원), 럭셔리엽서(5,000~8,000원)'
+      };
+    } else if (name.includes('의류') || name.includes('셔츠') || name.includes('후드')) {
+      return {
+        category: '팬시 의류 시장',
+        priceRange: '20,000~35,000원',
+        reason: '의류 굿즈는 프리미엄 상품으로, 브랜드와 디자인에 따라 20,000~35,000원대가 일반적입니다.',
+        competitors: 'K-POP 티셔츠(25,000~35,000원), 후드(35,000~50,000원)'
+      };
+    } else {
+      return {
+        category: '일반 굿즈 시장',
+        priceRange: '8,000~15,000원',
+        reason: '제품별 특성에 따라 8,000~15,000원대의 가격대를 권장합니다.',
+        competitors: '비슷한 카테고리 제품들(8,000~15,000원대)'
+      };
+    }
+  }
+
+  // 제안 표시
+  function displaySuggestion(name, suggestedPrice, market, cost, margin) {
+    const shipRev = 4000;
+    const logiCost = settings.pack + settings.ship + settings.mat + settings.ovh;
+    const kind = parseFloat(document.getElementById('simKind').value);
+
+    const { profitPerUnit, marginRate } = calculate(suggestedPrice, cost, shipRev, 1000, kind);
+
+    const html = `
+      <div style="background: var(--surface); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
+        <div style="font-weight: 600; color: var(--primary); font-size: 16px; margin-bottom: 8px;">제안 판매가: ${suggestedPrice.toLocaleString()}원</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px;">
+          <div>
+            <span style="color: var(--text-secondary);">예상 순이익:</span>
+            <div style="font-weight: 700; color: var(--success);">${Math.round(profitPerUnit).toLocaleString()}원</div>
+          </div>
+          <div>
+            <span style="color: var(--text-secondary);">예상 마진율:</span>
+            <div style="font-weight: 700; color: var(--success);">${marginRate.toFixed(1)}%</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: var(--bg); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
+        <div style="font-weight: 600; color: var(--text-primary); font-size: 14px; margin-bottom: 8px;">📊 시장 분석</div>
+        <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+          <div style="margin-bottom: 8px;">
+            <span style="font-weight: 600; color: var(--text-primary);">시장:</span> ${market.category}
+          </div>
+          <div style="margin-bottom: 8px;">
+            <span style="font-weight: 600; color: var(--text-primary);">일반 가격대:</span> ${market.priceRange}
+          </div>
+          <div style="margin-bottom: 8px;">
+            <span style="font-weight: 600; color: var(--text-primary);">분석:</span> ${market.reason}
+          </div>
+          <div>
+            <span style="font-weight: 600; color: var(--text-primary);">비교군:</span> ${market.competitors}
+          </div>
+        </div>
+      </div>
+
+      <div style="background: #E3F2FD; border-radius: 10px; padding: 12px; font-size: 12px; color: #0071E3; line-height: 1.5;">
+        <strong>💡 근거:</strong> 기존 판매 상품 마진율(${margin.toFixed(1)}%)을 기준으로, 원가(${cost.toLocaleString()}원) + 물류비(${logiCost.toLocaleString()}원)를 감안하여 계산했습니다.
+      </div>
+    `;
+
+    document.getElementById('suggestionContent').innerHTML = html;
+    document.getElementById('pricesuggestion').style.display = 'block';
+
+    // 저장할 제안 판가
+    window.suggestedPriceValue = suggestedPrice;
+  }
+
+  // 제안 적용
+  function applySuggestion() {
+    if (window.suggestedPriceValue) {
+      document.getElementById('simPrice').value = window.suggestedPriceValue.toLocaleString();
+      simulateFromQuickForm();
+      closeSuggestion();
+      showToast('제안 판가가 적용되었습니다');
+    }
+  }
+
+  // 제안 닫기
+  function closeSuggestion() {
+    document.getElementById('pricesuggestion').style.display = 'none';
+  }
+
   // 이벤트
   document.getElementById('btnSimulate').addEventListener('click', simulateFromQuickForm);
   document.getElementById('btnSaveSim').addEventListener('click', saveSimulation);
+  document.getElementById('btnSuggestPrice').addEventListener('click', suggestPrice);
+  document.getElementById('btnApplySuggestion').addEventListener('click', applySuggestion);
+  document.getElementById('btnCloseSuggestion').addEventListener('click', closeSuggestion);
 
   document.getElementById('simName').addEventListener('input', updateCurrentProduct);
 
