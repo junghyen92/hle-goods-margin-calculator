@@ -756,7 +756,7 @@
     const totalRevenue = price + shipRev;
     const kindFee = totalRevenue * (kind / 100);
     const pgFee = totalRevenue * (settings.pg / 100);
-    const hcFee = totalRevenue * (kind / 100) * (settings.hc / 100);
+    const hcFee = totalRevenue * (settings.hc / 100);  // 한컴: 총매출의 5%
     const totalFee = kindFee + pgFee + hcFee;
     const logiCost = settings.pack + settings.ship + settings.mat + settings.ovh;
     const profitPerUnit = totalRevenue - cost - logiCost - totalFee;
@@ -940,7 +940,7 @@
     const totalRevenue = price + shipRev;
     const kindFee = totalRevenue * (kind / 100);
     const pgFee = totalRevenue * (settings.pg / 100);
-    const hcFee = totalRevenue * (kind / 100) * (settings.hc / 100);
+    const hcFee = totalRevenue * (settings.hc / 100);  // 한컴: 총매출의 5%
     const totalProfit = profit * sold;
 
     const html = `
